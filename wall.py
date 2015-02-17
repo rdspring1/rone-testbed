@@ -1,4 +1,4 @@
-import rone, sys, math, math2, leds
+import rone, sys, math, math2, leds, velocity, poseX
 
 ########  part 0: helper functions ########
 # global PWM setting for all motion
@@ -86,6 +86,10 @@ def back_rotate_left(time):
     rone.motor_brake('r')
     # student code end
 
+#### Pose estimator ####
+WHEEL_BASE = 78
+ENCODER_MM_PER_TICKS = 0.0625
+
 #update the pose state
 def pose_update(pose_state):
     # 1. Get the left and right encoder ticks
@@ -125,13 +129,13 @@ def pose_update(pose_state):
     pose_state['theta'] = math2.normalize_angle(ntheta)
     return 0
 
-ccw = [2, 1]
+ccw = [1, 2]
 ccw_convex = [2, 1, 0, 7]
-ccw_reflex = [2]
+ccw_reflex = [1]
 
-cw = [5, 6]
+cw = [6, 5]
 cw_convex = [5, 6, 7, 0]
-cw_reflex = [5]
+cw_reflex = [6]
 
 def ir_bits():
     rone.ir_comms_send_message();
@@ -139,31 +143,60 @@ def ir_bits():
     msg = rone.ir_comms_get_message()
     if msg != None:
         (msg, recv_list, xmit_list, range_bits) = msg
-    return recv_list
+        return recv_list
+
+def check(obs_bits):
+    recv_bits = ir_bits()
+    if recv_bits == None:
+        return False
+    
+    for bit in obs_bits:
+        if not(bit in recv_bits):
+            return False
+    return True
+
+def not_check(obs_bits):
+    recv_bits = ir_bits()
+    if recv_bits == None:
+        return False
+    
+    for bit in obs_bits:
+        if not(bit in recv_bits):
+            return True
+    return False
 
 def convex_ccw_turn():
-    previous_bearing = pose_state['theta']
-    while ir_bits() == ccw_convex:
-        move_rotate_right(10)
-    print 'convex angle', abs(math2.normalize_angle(pose_state['theta'] - previous_bearing))
+    print 'convex ccw turn'
+    previous_bearing = poseX.get_theta()
+    while check(ccw_convex):
+        move_rotate_right(250)
+    poseX.update()
+    print 'convex angle', math.degrees(math2.normalize_angle(poseX.get_theta() - previous_bearing))
 
+# add 180 degrees to robot turning angle to get polygon vertex angle
 def reflex_ccw_turn():
-    previous_bearing = pose_state['theta']
-    while ir_bits() == ccw_reflex:
-        move_rotate_left(10)
-    print 'reflex_angle', abs(math2.normalize_angle(pose_state['theta'] - previous_bearing))
+    print 'reflex ccw turn'
+    previous_bearing = poseX.get_theta()
+    while not_check(ccw_reflex):
+        move_rotate_left(250)
+    poseX.update()
+    print 'reflex_angle', math.degrees(math2.normalize_angle(poseX.get_theta() - previous_bearing)) + 180
 
 def update_motion():
-    if ir_bits() == ccw_convex:
+    if check(ccw_convex):
         convex_ccw_turn()
-    else if ir_bits() == ccw_reflex:
+    elif not_check(ccw_reflex):
         reflex_ccw_turn()
-    else:
-        move_forward(100)
+    elif check(ccw):
+        move_forward(50)
         
+MODE_INACTIVE = 0
+MODE_ACTIVE = 1
+LED_BRIGHTNESS = 40
 
-def waypoint_motion():
+def wall_following():
     # init class variables 
+    velocity.init(0.22, 40, 0.5, 0.1)
     leds.init()
     poseX.init(pose_update)
 
@@ -187,7 +220,7 @@ def waypoint_motion():
 
         # print status every 250ms
         if sys.time() > pose_estimator_print_time:
-            pose_estimator_print_time += 250
+            pose_estimator_print_time += 500
             print 'pose', poseX.get_pose(), 'odo', poseX.get_odometer()
             if mode == MODE_INACTIVE:
                 if (math2.pose_subtract(poseX.get_pose(), pose_old) != (0.0, 0.0, 0.0)): 
@@ -212,6 +245,6 @@ def waypoint_motion():
                 mode = MODE_INACTIVE
                 move_stop(100)
 
-# waypoint_motion()
+wall_following()
                     
 
