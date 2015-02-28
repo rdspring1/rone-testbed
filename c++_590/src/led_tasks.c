@@ -15,7 +15,9 @@ void buttonBlink(void);
 void buttonColors(void* parameters);
 void testLedBrightness(void);
 
-int main (void){
+/*
+int main (void)
+{
 	systemInit();
 	systemPrintStartup();
 	buttonsInit();
@@ -28,8 +30,8 @@ int main (void){
 	osTaskStartScheduler();
 	//Program should never get here
 	return 0;
-
 }
+*/
 
 //This is a basic Hello World test of the blinky Heart beat LED.
 void blink (void){
