@@ -1,8 +1,7 @@
 /*
- * blinkTest.c
+ * led_tasks.c
  *
- *  Created on: May 22, 2012
- *      Author: Lindsay
+ *  Created on: February 22, 2015
  *
  *		This is a test of the LEDs, both the heartbeat and the RGB indicators.
  */
