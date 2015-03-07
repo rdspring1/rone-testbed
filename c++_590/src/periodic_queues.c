@@ -56,6 +56,7 @@ void task_reader(void* parameters)
 	}
 }
 
+/*
 int main (void)
 {
 	systemInit();
@@ -73,3 +74,4 @@ int main (void)
 	//Program should never get here
 	return 0;
 }
+*/

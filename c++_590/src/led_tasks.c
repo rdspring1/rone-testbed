@@ -19,7 +19,6 @@ int main (void)
 {
 	systemInit();
 	systemPrintStartup();
-	buttonsInit();
 
 	//blink();
 	//buttonBlink();
